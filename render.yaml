@@ -1,0 +1,72 @@
+services:
+  # Backend - Express + BullMQ + Prisma
+  - type: web
+    name: email-scheduler-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      # Supabase Postgres - ya to dashboard me manual dalna, ya render secret se
+      - key: DATABASE_URL
+        sync: false
+      # Upstash Redis (free) - https://upstash.com se REDIS_URL copy kar
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.ethereal.email
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: Email Scheduler <no-reply@example.com>
+      - key: CONCURRENCY
+        value: 5
+      - key: MAX_EMAILS_PER_HOUR_PER_SENDER
+        value: 100
+      - key: ALLOW_DEV_LOGIN
+        value: false
+
+  # Frontend - Vite Static
+  - type: web
+    name: email-scheduler-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+    # Vercel jaisa hi, bas Render pe static
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
