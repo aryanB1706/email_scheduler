@@ -55,11 +55,12 @@ async function bootstrap() {
     console.error("[bootstrap] Redis connection failed:", err.message);
   }
 
-  await verifySmtp();
+  // Don't block server startup on SMTP - Ethereal can be slow on Render
+  verifySmtp().catch(() => {});
 
-  const server = app.listen(PORT, () => {
-    console.log(`[server] listening on http://localhost:${PORT}`);
-    console.log(`[server] health check: http://localhost:${PORT}/api/health`);
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[server] listening on http://0.0.0.0:${PORT}`);
+    console.log(`[server] health check: http://0.0.0.0:${PORT}/api/health`);
   });
 
   server.on("error", (err: any) => {
