@@ -53,9 +53,10 @@ services:
       - key: ALLOW_DEV_LOGIN
         value: false
 
-  # Frontend - Vite Static (Render Static Site)
-  - type: static_site
+  # Frontend - Vite Static
+  - type: web
     name: email-scheduler-frontend
+    env: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
