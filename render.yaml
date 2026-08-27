@@ -53,16 +53,13 @@ services:
       - key: ALLOW_DEV_LOGIN
         value: false
 
-  # Frontend - Vite Static
-  - type: web
+  # Frontend - Vite Static (Render Static Site)
+  - type: static_site
     name: email-scheduler-frontend
-    env: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     autoDeploy: true
-    # Vercel jaisa hi, bas Render pe static
     routes:
       - type: rewrite
         source: /*
