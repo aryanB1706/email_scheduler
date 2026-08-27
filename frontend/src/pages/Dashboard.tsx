@@ -57,6 +57,26 @@ export default function Dashboard({ initialTab = "scheduled" }: Props) {
     sentQ.refetch();
   };
 
+  // Auto-refresh every 5s so sent/scheduled moves without reload (fixes "reload karna padta hai")
+  useEffect(() => {
+    const id = setInterval(() => {
+      scheduledQ.refetch();
+      sentQ.refetch();
+    }, 5000);
+    // Also refetch when tab becomes visible (user switches back to tab)
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        scheduledQ.refetch();
+        sentQ.refetch();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
   const scheduledCount = scheduledQ.data?.pagination.total ?? 0;
   const sentCount = sentQ.data?.pagination.total ?? 0;
 
@@ -78,8 +98,9 @@ export default function Dashboard({ initialTab = "scheduled" }: Props) {
         <button className="rounded-full p-2 text-gray-400 hover:bg-gray-100">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
         </button>
-        <button onClick={handleRefresh} className="rounded-full p-2 text-gray-400 hover:bg-gray-100">
+        <button onClick={handleRefresh} className="relative rounded-full p-2 text-gray-400 hover:bg-gray-100" title="Auto-refresh every 5s">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse rounded-full bg-green-500" />
         </button>
       </div>
 
