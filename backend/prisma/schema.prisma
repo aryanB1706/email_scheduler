@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailJobStatus {
+  pending
+  queued
+  sent
+  failed
+}
+
+//
+// User — authenticated via Google OAuth
+// googleId is the stable Google `sub` claim; used as unique identity.
+//
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique @map("google_id")
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+//
+// Sender — logical sending identity (own address / alias).
+// Enables per-sender rate limiting, e.g. BullMQ rateLimiter per senderId
+// or DB-level counting of queued jobs grouped by senderId.
+//
+model Sender {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  emailJobs EmailJob[]
+
+  @@map("senders")
+}
+
+//
+// EmailJob — single scheduled email
+//
+model EmailJob {
+  id             String         @id @default(cuid())
+  subject        String
+  body           String         @db.Text
+  recipientEmail String         @map("recipient_email")
+  senderId       String         @map("sender_id")
+  sender         Sender         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  scheduledAt    DateTime       @map("scheduled_at")
+  status         EmailJobStatus @default(pending)
+  bullJobId      String?        @unique @map("bull_job_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@index([senderId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([recipientEmail])
+  @@map("email_jobs")
+}
