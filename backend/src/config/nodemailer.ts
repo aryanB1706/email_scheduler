@@ -6,6 +6,10 @@ export const transporter = nodemailer.createTransport({
   port: env.smtp.port,
   secure: false, // Ethereal uses STARTTLS on 587
   auth: env.smtp.user && env.smtp.pass ? { user: env.smtp.user, pass: env.smtp.pass } : undefined,
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
+  logger: false,
 });
 
 export async function verifySmtp(): Promise<void> {
